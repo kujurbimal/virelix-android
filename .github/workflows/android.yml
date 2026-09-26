@@ -1,0 +1,26 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Firebase config is not committed
+        run: |
+          test ! -f app/google-services.json
+          test -f app/google-services.json.example
+
+      - name: Verify Android project files
+        run: |
+          test -f settings.gradle.kts
+          test -f build.gradle.kts
+          test -f app/build.gradle.kts
+          test -f app/src/main/AndroidManifest.xml
+          test -f app/src/main/res/xml/file_paths.xml
