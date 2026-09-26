@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.C
+import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -44,8 +45,9 @@ import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.Effects
-import androidx.media3.transformer.Presentation
-import androidx.media3.transformer.SpeedProvider
+import androidx.media3.effect.Presentation
+import androidx.media3.common.audio.SpeedProvider
+import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
 import java.io.File
 import java.util.UUID
@@ -296,8 +298,10 @@ class MainActivity : ComponentActivity() {
 
                     exportTimeline(
                         clips = clips,
-                        preset = preset,
-                        onProgress = { value -> runOnUiThread { progress = value } },
+						preset = preset,
+						textOverlay = textOverlay,
+						musicUri = musicUri,
+						onProgress = { value -> runOnUiThread { progress = value } },
                         onComplete = { file ->
                             runOnUiThread {
                                 exporting = false
@@ -378,7 +382,7 @@ class MainActivity : ComponentActivity() {
                     Column {
                         Text(if (musicUri == null) "No music selected" else musicName)
                         Spacer(Modifier.height(8.dp))
-                        Button(onClick={audioPicker::launch}) { Text("Choose audio") }
+                        Button(onClick = { audioPicker.launch("audio/*") }) { Text("Choose audio") }
                         Spacer(Modifier.height(6.dp))
                         Text("Volume ${(musicVolume*100).toInt()}%")
                         Slider(value=musicVolume,onValueChange={musicVolume=it})
@@ -603,8 +607,10 @@ class MainActivity : ComponentActivity() {
     @UnstableApi
     private fun exportTimeline(
         clips: List<Clip>,
-        preset: Preset,
-        onProgress: (Float) -> Unit,
+		preset: Preset,
+		textOverlay: String,
+		musicUri: Uri?,
+		onProgress: (Float) -> Unit,
         onComplete: (File) -> Unit,
         onError: (String) -> Unit
     ) {
@@ -620,7 +626,7 @@ class MainActivity : ComponentActivity() {
             Presentation.LAYOUT_SCALE_TO_FIT_WITH_CROP
         )
 
-        val videoEffects = buildList<androidx.media3.effect.Effect> {
+        val videoEffects = buildList<Effect> {
             add(presentation)
             buildTextOverlay(textOverlay)?.let(::add)
         }
@@ -738,7 +744,7 @@ class MainActivity : ComponentActivity() {
         onProgress: (Float) -> Unit
     ) {
         Thread {
-            val holder = Transformer.ProgressHolder()
+            val holder = ProgressHolder()
 
             while (true) {
                 val state = transformer.getProgress(holder)
