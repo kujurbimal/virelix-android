@@ -3,9 +3,14 @@
 *.iml
 local.properties
 .DS_Store
+
 build/
 app/build/
+
 app/google-services.json
+
 *.jks
 *.keystore
 
+# Release build artifacts
+app/release/
