@@ -8,17 +8,4 @@ app/build/
 app/google-services.json
 *.jks
 *.keystore
-# Android build outputs
-.gradle/
-build/
-*/build/
 
-# Release artifacts
-app/release/
-
-# Signing keys
-*.jks
-*.keystore
-
-# Firebase configuration
-app/google-services.json
