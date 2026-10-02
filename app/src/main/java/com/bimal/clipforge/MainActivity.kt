@@ -19,6 +19,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -81,9 +83,10 @@ private val presets = listOf(
     Preset("Feed", "4:5", 1080, 1350)
 )
 
-private val Bg = Color(0xFF090A0F)
-private val Panel = Color(0xFF151821)
-private val Accent = Color(0xFF7C5CFC)
+private val Bg = Color(0xFF080A12)
+private val Panel = Color(0xFF151927)
+private val Accent = Color(0xFF8B6CFF)
+private val AccentBlue = Color(0xFF36A9FF)
 
 @UnstableApi
 private class ConstantSpeedProvider(speed: Float) : SpeedProvider {
@@ -204,7 +207,14 @@ class MainActivity : ComponentActivity() {
             selectedIndex=selectedIndex.coerceAtMost(clips.lastIndex).coerceAtLeast(-1)
         }
 
-        Column(Modifier.fillMaxSize().background(Bg).padding(14.dp)){
+        Box(Modifier.fillMaxSize()) {
+            VirelixBackground()
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(14.dp)
+                    .verticalScroll(rememberScrollState())
+            ){
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically){
                 Column{
                     Text("Virelix",style=MaterialTheme.typography.headlineSmall)
@@ -220,13 +230,60 @@ class MainActivity : ComponentActivity() {
             OutlinedTextField(value=projectName,onValueChange={projectName=it},label={Text("Project name")},singleLine=true,modifier=Modifier.fillMaxWidth())
             Spacer(Modifier.height(7.dp))
 
-            if(selected!=null) VideoPreview(selected.uri,this@MainActivity)
-            else Box(Modifier.fillMaxWidth().height(250.dp).background(Panel,RoundedCornerShape(18.dp)),contentAlignment=Alignment.Center){
-                Column(horizontalAlignment=Alignment.CenterHorizontally){
-                    Text("Create your first short",style=MaterialTheme.typography.headlineSmall)
-                    Text("Import multiple videos to build a timeline",color=Color.LightGray)
-                    Spacer(Modifier.height(8.dp))
-                    Button(onClick={picker.launch("video/*")}){Text("Choose Videos")}
+            if(selected!=null) {
+                VideoPreview(selected.uri,this@MainActivity)
+            } else {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(280.dp),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xCC151927)
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        Color.White.copy(alpha = 0.10f)
+                    )
+                ) {
+                    Box(
+                        Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(24.dp)
+                        ) {
+                            Text("✦", color = Accent, style = MaterialTheme.typography.displaySmall)
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "Create your next short",
+                                style = MaterialTheme.typography.headlineSmall
+                            )
+                            Spacer(Modifier.height(5.dp))
+                            Text(
+                                "Turn your clips into polished Shorts, Reels and TikToks.",
+                                color = Color.LightGray,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(Modifier.height(14.dp))
+                            Button(
+                                onClick = { picker.launch("video/*") },
+                                shape = RoundedCornerShape(14.dp)
+                            ) {
+                                Icon(Icons.Default.Add, null)
+                                Spacer(Modifier.width(6.dp))
+                                Text("Choose Videos")
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "AI editing • Music • Captions • Effects",
+                                color = Color.Gray,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
                 }
             }
 
@@ -492,7 +549,71 @@ class MainActivity : ComponentActivity() {
                 }
             )
 
+            Spacer(Modifier.height(18.dp))
+            Text(
+                "VIRELIX  •  CREATE. EDIT. SHARE.",
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White.copy(alpha = 0.28f),
+                style = MaterialTheme.typography.labelSmall
+            )
+
             if(exporting) AlertDialog(onDismissRequest={},confirmButton={},title={Text("Exporting")},text={Column{LinearProgressIndicator(progress={progress},modifier=Modifier.fillMaxWidth());Text("${(progress*100).toInt()}%")}})
+            }
+        }
+    }
+
+    @Composable
+    private fun VirelixBackground() {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            Color(0xFF080A12),
+                            Color(0xFF10152A),
+                            Color(0xFF090B15)
+                        )
+                    )
+                )
+        ) {
+            Canvas(Modifier.fillMaxSize()) {
+                val w = size.width
+                val h = size.height
+
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Accent.copy(alpha = 0.24f),
+                            Color.Transparent
+                        )
+                    ),
+                    radius = w * 0.70f,
+                    center = androidx.compose.ui.geometry.Offset(w * 0.88f, h * 0.08f)
+                )
+
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            AccentBlue.copy(alpha = 0.16f),
+                            Color.Transparent
+                        )
+                    ),
+                    radius = w * 0.58f,
+                    center = androidx.compose.ui.geometry.Offset(w * 0.04f, h * 0.48f)
+                )
+
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.035f),
+                            Color.Transparent
+                        )
+                    ),
+                    radius = w * 0.75f,
+                    center = androidx.compose.ui.geometry.Offset(w * 0.55f, h * 0.95f)
+                )
+            }
         }
     }
 
