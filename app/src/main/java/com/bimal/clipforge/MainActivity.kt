@@ -218,192 +218,329 @@ class MainActivity : ComponentActivity() {
             selectedIndex=selectedIndex.coerceAtMost(clips.lastIndex).coerceAtLeast(-1)
         }
 
+
         Box(Modifier.fillMaxSize()) {
             VirelixBackground()
             Column(
                 Modifier
                     .fillMaxSize()
-                    .padding(14.dp)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
                     .verticalScroll(rememberScrollState())
-            ){
-            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically){
-                Column{
-                    Text("Virelix",style=MaterialTheme.typography.headlineSmall)
-                    Text("AI-assisted Shorts & Reels editor",color=Color.LightGray)
-                }
-                Row{
-                    IconButton(enabled=history.isNotEmpty(),onClick={undo()}){Text("↶")}
-                    IconButton(enabled=redoStack.isNotEmpty(),onClick={redo()}){Text("↷")}
-                    Button(onClick={onClick@{picker.launch("video/*")}}){Icon(Icons.Default.Add,null);Spacer(Modifier.width(3.dp));Text("Add")}
-                }
-            }
-            Spacer(Modifier.height(7.dp))
-            OutlinedTextField(value=projectName,onValueChange={projectName=it},label={Text("Project name")},singleLine=true,modifier=Modifier.fillMaxWidth())
-            Spacer(Modifier.height(7.dp))
-
-            if(selected!=null) {
-                VideoPreview(selected.uri,this@MainActivity)
-            } else {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(280.dp),
-                    shape = RoundedCornerShape(22.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xCC151927)
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp,
-                        Color.White.copy(alpha = 0.10f)
-                    )
-                ) {
+            ) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Box(
-                        Modifier.fillMaxSize(),
+                        Modifier
+                            .size(42.dp)
+                            .background(
+                                Brush.linearGradient(listOf(Accent, AccentBlue)),
+                                RoundedCornerShape(13.dp)
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.padding(24.dp)
-                        ) {
-                            Text("✦", color = Accent, style = MaterialTheme.typography.displaySmall)
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                "Create your next short",
-                                style = MaterialTheme.typography.headlineSmall
-                            )
-                            Spacer(Modifier.height(5.dp))
-                            Text(
-                                "Turn your clips into polished Shorts, Reels and TikToks.",
-                                color = Color.LightGray,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Spacer(Modifier.height(14.dp))
-                            Button(
-                                onClick = { picker.launch("video/*") },
-                                shape = RoundedCornerShape(14.dp)
-                            ) {
-                                Icon(Icons.Default.Add, null)
-                                Spacer(Modifier.width(6.dp))
-                                Text("Choose Videos")
-                            }
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                "AI editing • Music • Captions • Effects",
-                                color = Color.Gray,
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
+                        Text("V", color = Color.White, style = MaterialTheme.typography.titleLarge)
                     }
-                }
-            }
-
-            Spacer(Modifier.height(7.dp))
-            Text("Timeline",style=MaterialTheme.typography.titleMedium)
-            TimelinePanel(clips,selectedIndex){selectedIndex=it}
-
-            Spacer(Modifier.height(7.dp))
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
-                EditorTool("✂ Trim"){if(selected!=null)dialog="trim"}
-                EditorTool("Split"){
-                    selected?.let{
-                        val mid=it.startMs+(it.endMs-it.startMs)/2
-                        if(mid>it.startMs+300 && mid<it.endMs-300){
-                            val a=it.copy(endMs=mid,name="${it.name}-A")
-                            val b=it.copy(id=UUID.randomUUID().toString(),startMs=mid,name="${it.name}-B")
-                            commit(clips.toMutableList().apply{removeAt(selectedIndex);add(selectedIndex,a);add(selectedIndex+1,b)})
-                        }
-                    }
-                }
-                EditorTool("Aa Text"){dialog="text"}
-                EditorTool("🎵 Music"){dialog="music"}
-                EditorTool("✨ Effects"){dialog="effects"}
-                EditorTool("🤖 AI Edit"){showAi=true}
-                EditorTool("🎞 Templates"){showTemplates=true}
-            }
-            Spacer(Modifier.height(5.dp))
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
-                EditorTool("Duplicate"){
-                    selected?.let{commit(clips.toMutableList().apply{add(selectedIndex+1,it.copy(id=UUID.randomUUID().toString(),name="${it.name} Copy"))});selectedIndex++}
-                }
-                EditorTool("Mute"){
-                    selected?.let{commit(clips.toMutableList().apply{this[selectedIndex]=it.copy(volume=if(it.volume>0f)0f else 1f)})}
-                }
-                EditorTool("Speed"){
-                    selected?.let{
-                        val s=when(it.speed){1f->1.5f;1.5f->2f;else->1f}
-                        commit(clips.toMutableList().apply{this[selectedIndex]=it.copy(speed=s)})
-                    }
-                }
-                EditorTool("Delete"){
-                    if(selectedIndex>=0){commit(clips.filterIndexed{i,_->i!=selectedIndex});selectedIndex=(selectedIndex-1).coerceAtLeast(0)}
-                }
-            }
-            Spacer(Modifier.height(7.dp))
-            if(aiSummary.isNotBlank()) Text(aiSummary,color=Accent,style=MaterialTheme.typography.labelMedium)
-            Text("Format",style=MaterialTheme.typography.titleMedium)
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)){
-                presets.forEach{FilterChip(selected=preset==it,onClick={preset=it},label={Text("${it.name} ${it.ratio}")})}
-            }
-            Spacer(Modifier.height(7.dp))
-            Text(
-                if (clips.isEmpty()) "Timeline is empty"
-                else "${clips.size} clip(s) • ${clips.sumOf { (it.endMs - it.startMs).coerceAtLeast(0L) } / 1000L}s timeline",
-                color = Color.LightGray
-            )
-            Text(
-                "Text: ${if(textOverlay.isBlank()) "off" else "on"} • Music: ${if(musicUri==null) "off" else "on"} • Filter: $filterName • Transition: $transitionName",
-                color = Color.Gray,
-                style = MaterialTheme.typography.labelSmall
-            )
-            Spacer(Modifier.height(4.dp))
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                enabled = clips.isNotEmpty() && !exporting,
-                onClick = {
-                    exporting = true
-                    progress = 0f
-
-                    exportTimeline(
-                        clips = clips,
-						preset = preset,
-						textOverlay = textOverlay,
-						musicUri = musicUri,
-						onProgress = { value -> runOnUiThread { progress = value } },
-                        onComplete = { file ->
-                            runOnUiThread {
-                                exporting = false
-                                saveProject(
-                                    projectName,
-                                    preset,
-                                    clips,
-                                    file,
-                                    textOverlay,
-                                    musicName,
-                                    filterName,
-                                    musicUri,
-                                    musicVolume,
-                                    stickerText,
-                                    captionStyle,
-                                    transitionName,
-                                    aiStyle,
-                                    autoCaptions,
-                                    beatSync
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Virelix", style = MaterialTheme.typography.headlineSmall)
+                            Spacer(Modifier.width(6.dp))
+                            Surface(shape = RoundedCornerShape(7.dp), color = Accent.copy(alpha = 0.24f)) {
+                                Text(
+                                    "2.0",
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.labelSmall
                                 )
-                                share(file)
                             }
-                        },
-                        onError = { message ->
-                            runOnUiThread {
-                                exporting = false
-                                toast(message)
+                        }
+                        Text(
+                            "AI-assisted Shorts & Reels editor",
+                            color = Color(0xFFC8C4D2),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    IconButton(enabled = history.isNotEmpty(), onClick = { undo() }) {
+                        Text("↶", color = if (history.isNotEmpty()) Color.White else Color.Gray)
+                    }
+                    IconButton(enabled = redoStack.isNotEmpty(), onClick = { redo() }) {
+                        Text("↷", color = if (redoStack.isNotEmpty()) Color.White else Color.Gray)
+                    }
+                    Button(
+                        onClick = { picker.launch("video/*") },
+                        contentPadding = PaddingValues(horizontal = 13.dp, vertical = 8.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Add, null)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Add")
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = projectName,
+                    onValueChange = { projectName = it },
+                    label = { Text("Project name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp)
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                if (selected != null) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text("Preview", style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.weight(1f))
+                        Surface(shape = RoundedCornerShape(8.dp), color = Accent.copy(alpha = 0.18f)) {
+                            Text(
+                                preset.ratio,
+                                modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xCC080A12)),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.10f))
+                    ) {
+                        VideoPreview(selected.uri, this@MainActivity)
+                    }
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().height(330.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xB8151B31)),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Accent.copy(alpha = 0.35f))
+                    ) {
+                        Box(Modifier.fillMaxSize()) {
+                            Canvas(Modifier.fillMaxSize()) {
+                                val w = size.width
+                                val h = size.height
+                                drawCircle(
+                                    brush = Brush.radialGradient(listOf(Accent.copy(alpha = 0.22f), Color.Transparent)),
+                                    radius = w * 0.58f,
+                                    center = androidx.compose.ui.geometry.Offset(w * 0.84f, h * 0.10f)
+                                )
+                                drawCircle(
+                                    brush = Brush.radialGradient(listOf(AccentBlue.copy(alpha = 0.16f), Color.Transparent)),
+                                    radius = w * 0.50f,
+                                    center = androidx.compose.ui.geometry.Offset(w * 0.10f, h * 0.88f)
+                                )
+                            }
+                            Column(
+                                Modifier.fillMaxSize().padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text("✦", color = Accent, style = MaterialTheme.typography.displayLarge)
+                                Text("Create your next short", color = Color.White, style = MaterialTheme.typography.headlineSmall)
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    "Turn your clips into polished Shorts, Reels and TikToks.",
+                                    color = Color(0xFFD0CCDA),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Spacer(Modifier.height(18.dp))
+                                Button(
+                                    onClick = { picker.launch("video/*") },
+                                    modifier = Modifier.fillMaxWidth(0.78f),
+                                    shape = RoundedCornerShape(15.dp),
+                                    contentPadding = PaddingValues(vertical = 13.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, null)
+                                    Spacer(Modifier.width(7.dp))
+                                    Text("Choose Videos")
+                                }
+                                Spacer(Modifier.height(12.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Text("✦ AI", color = Accent)
+                                    Text("♫ Music", color = AccentBlue)
+                                    Text("T Captions", color = Color(0xFFFFA7E8))
+                                    Text("☆ Effects", color = Color(0xFFE4C0FF))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(14.dp))
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Timeline", style = MaterialTheme.typography.titleLarge)
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        if (clips.isEmpty()) "No clips" else "${{clips.size} clips",
+                        color = Color(0xFFAAA6B6),
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+                Spacer(Modifier.height(6.dp))
+                TimelinePanel(clips, selectedIndex) { selectedIndex = it }
+
+                Spacer(Modifier.height(12.dp))
+                Text("Tools", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(6.dp))
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        VirelixToolCard("✂", "Trim", Modifier.weight(1f)) { if (selected != null) dialog = "trim" }
+                        VirelixToolCard("◈", "Split", Modifier.weight(1f)) {
+                            selected?.let {
+                                val mid = it.startMs + (it.endMs - it.startMs) / 2
+                                if (mid > it.startMs + 300 && mid < it.endMs - 300) {
+                                    val a = it.copy(endMs = mid, name = "${{it.name}-A")
+                                    val b = it.copy(id = UUID.randomUUID().toString(), startMs = mid, name = "${{it.name}-B")
+                                    commit(clips.toMutableList().apply {
+                                        removeAt(selectedIndex)
+                                        add(selectedIndex, a)
+                                        add(selectedIndex + 1, b)
+                                    })
+                                }
+                            }
+                        }
+                        VirelixToolCard("T", "Text", Modifier.weight(1f)) { dialog = "text" }
+                        VirelixToolCard("♫", "Music", Modifier.weight(1f)) { dialog = "music" }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        VirelixToolCard("☆", "Effects", Modifier.weight(1f)) { dialog = "effects" }
+                        VirelixToolCard("AI", "AI Edit", Modifier.weight(1f)) { showAi = true }
+                        VirelixToolCard("↻", "Duplicate", Modifier.weight(1f)) {
+                            selected?.let {
+                                commit(clips.toMutableList().apply {
+                                    add(selectedIndex + 1, it.copy(id = UUID.randomUUID().toString(), name = "${{it.name} Copy"))
+                                })
+                                selectedIndex++
+                            }
+                        }
+                        VirelixToolCard("◉", "Mute", Modifier.weight(1f)) {
+                            selected?.let {
+                                commit(clips.toMutableList().apply {
+                                    this[selectedIndex] = it.copy(volume = if (it.volume > 0f) 0f else 1f)
+                                })
+                            }
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        VirelixToolCard("1×", "Speed", Modifier.weight(1f)) {
+                            selected?.let {
+                                val s = when (it.speed) { 1f -> 1.5f; 1.5f -> 2f; else -> 1f }
+                                commit(clips.toMutableList().apply { this[selectedIndex] = it.copy(speed = s) })
+                            }
+                        }
+                        VirelixToolCard("▣", "Templates", Modifier.weight(1f)) { showTemplates = true }
+                        VirelixToolCard("⌫", "Delete", Modifier.weight(1f)) {
+                            if (selectedIndex >= 0) {
+                                commit(clips.filterIndexed { i, _ -> i != selectedIndex })
+                                selectedIndex = (selectedIndex - 1).coerceAtLeast(0)
+                            }
+                        }
+                        VirelixToolCard("↕", "Adjust", Modifier.weight(1f)) { dialog = "effects" }
+                    }
+                }
+
+                Spacer(Modifier.height(14.dp))
+                Text("Format", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    presets.forEach {
+                        FilterChip(
+                            selected = preset == it,
+                            onClick = { preset = it },
+                            label = { Text("${{it.name} ${{it.ratio}") }
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xB8141928))
+                ) {
+                    Column(Modifier.padding(14.dp)) {
+                        Text(
+                            if (clips.isEmpty()) "Timeline is empty"
+                            else "${{clips.size} clip(s) • ${{clips.sumOf { (it.endMs - it.startMs).coerceAtLeast(0L) } / 1000L}s timeline",
+                            color = Color.White
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Text: ${{if (textOverlay.isBlank()) "off" else "on"} • Music: ${{if (musicUri == null) "off" else "on"} • Filter: ${{filterName} • Transition: ${{transitionName}",
+                            color = Color(0xFFAAA6B6),
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = clips.isNotEmpty() && !exporting,
+                    shape = RoundedCornerShape(15.dp),
+                    contentPadding = PaddingValues(vertical = 14.dp),
+                    onClick = {
+                        exporting = true
+                        progress = 0f
+                        exportTimeline(
+                            clips = clips,
+                            preset = preset,
+                            textOverlay = textOverlay,
+                            musicUri = musicUri,
+                            onProgress = { value -> runOnUiThread { progress = value } },
+                            onComplete = { file ->
+                                runOnUiThread {
+                                    exporting = false
+                                    saveProject(
+                                        projectName, preset, clips, file, textOverlay, musicName,
+                                        filterName, musicUri, musicVolume, stickerText, captionStyle,
+                                        transitionName, aiStyle, autoCaptions, beatSync
+                                    )
+                                    share(file)
+                                }
+                            },
+                            onError = { message ->
+                                runOnUiThread {
+                                    exporting = false
+                                    toast(message)
+                                }
+                            }
+                        )
+                    }
+                ) {
+                    Text(if (clips.isEmpty()) "Add a video to export" else "Export • ${{preset.ratio}")
+                }
+
+                Spacer(Modifier.height(18.dp))
+                Text(
+                    "VIRELIX 2.0  •  CREATE. EDIT. SHARE.",
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color.White.copy(alpha = 0.32f),
+                    style = MaterialTheme.typography.labelSmall
+                )
+
+                if (exporting) {
+                    AlertDialog(
+                        onDismissRequest = {},
+                        confirmButton = {},
+                        title = { Text("Exporting") },
+                        text = {
+                            Column {
+                                LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+                                Text("${{(progress * 100).toInt()}%")
                             }
                         }
                     )
                 }
-            ) {
-                Text("Export • ${preset.ratio}")
             }
+        }
 
             if(dialog=="trim"&&selected!=null){
                 var s by remember(selected.id){mutableLongStateOf(selected.startMs)}
@@ -629,26 +766,97 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun TimelinePanel(clips:List<Clip>,selected:Int,onSelect:(Int)->Unit){
-        Column(Modifier.fillMaxWidth().background(Panel,RoundedCornerShape(14.dp)).padding(7.dp)){
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(5.dp)){
-                clips.forEachIndexed{i,c->
-                    Card(onClick={onSelect(i)},colors=CardDefaults.cardColors(containerColor=if(i==selected)Accent else Color(0xFF252A36)),modifier=Modifier.width(98.dp).height(58.dp)){
-                        Column(Modifier.padding(6.dp)){Text(c.name,maxLines=1);Text("${fmt(c.startMs)}-${fmt(c.endMs)}",style=MaterialTheme.typography.labelSmall);Text("${c.speed}x",style=MaterialTheme.typography.labelSmall)}
+    private fun TimelinePanel(clips: List<Clip>, selected: Int, onSelect: (Int) -> Unit) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xD2141928)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+        ) {
+            Column(Modifier.padding(10.dp)) {
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    clips.forEachIndexed { i, c ->
+                        Card(
+                            onClick = { onSelect(i) },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (i == selected) Accent.copy(alpha = 0.86f) else Color(0xFF252A3A)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.width(112.dp).height(70.dp)
+                        ) {
+                            Column(Modifier.padding(8.dp)) {
+                                Text(c.name, maxLines = 1, color = Color.White)
+                                Text(
+                                    "${{fmt(c.startMs)}–${{fmt(c.endMs)}",
+                                    color = Color.White.copy(alpha = 0.78f),
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                                Text(
+                                    "${{c.speed}×  •  ${{if (c.volume > 0f) "Audio" else "Muted"}",
+                                    color = Color.White.copy(alpha = 0.72f),
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                        }
+                    }
+                    if (clips.isEmpty()) {
+                        Text(
+                            "Add videos to build your timeline",
+                            color = Color(0xFFAAA6B6),
+                            modifier = Modifier.padding(vertical = 10.dp)
+                        )
                     }
                 }
+                Spacer(Modifier.height(10.dp))
+                Text("VIDEO", color = Color.White, style = MaterialTheme.typography.labelMedium)
+                Spacer(Modifier.height(3.dp))
+                Row(
+                    Modifier.fillMaxWidth().height(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    if (clips.isEmpty()) {
+                        Box(Modifier.fillMaxWidth().background(Color(0xFF2A3042), RoundedCornerShape(4.dp)))
+                    } else {
+                        clips.forEachIndexed { i, _ ->
+                            Box(
+                                Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .background(if (i == selected) Accent else Color(0xFF3A4154), RoundedCornerShape(3.dp))
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text("TEXT     ───── caption ─────────────────", color = Color(0xFFAAA6B6), style = MaterialTheme.typography.labelSmall)
+                Text("AUDIO    ───── music ───────────────────", color = Color(0xFF8ED8FF), style = MaterialTheme.typography.labelSmall)
+                Text("EFFECTS  ───── transitions ─────────────", color = Color(0xFFD6A7FF), style = MaterialTheme.typography.labelSmall)
             }
-            Spacer(Modifier.height(4.dp))
-            Text("VIDEO  ━━━━━━━━━━━━━━━━━━━")
-            Text("TEXT   ─── caption ───────────",color=Color.Gray)
-            Text("AUDIO  ─── music ─────────────",color=Color.Gray)
-            Text("FX     ─── effects ───────────",color=Color.Gray)
         }
     }
 
     @Composable
-    private fun EditorTool(label: String, onClick: () -> Unit) {
-        OutlinedButton(onClick = onClick) { Text(label) }
+    private fun VirelixToolCard(icon: String, label: String, modifier: Modifier, onClick: () -> Unit) {
+        Card(
+            onClick = onClick,
+            modifier = modifier.height(76.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xB8171C2D)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.10f))
+        ) {
+            Column(
+                Modifier.fillMaxSize().padding(7.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(icon, color = Accent, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(3.dp))
+                Text(label, color = Color(0xFFE0DCE7), style = MaterialTheme.typography.labelMedium)
+            }
+        }
     }
 
     @Composable
