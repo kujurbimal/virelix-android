@@ -539,8 +539,6 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 }
-            }
-        }
 
             if(dialog=="trim"&&selected!=null){
                 var s by remember(selected.id){mutableLongStateOf(selected.startMs)}
