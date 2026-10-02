@@ -374,7 +374,7 @@ class MainActivity : ComponentActivity() {
                     Text("Timeline", style = MaterialTheme.typography.titleLarge)
                     Spacer(Modifier.weight(1f))
                     Text(
-                        if (clips.isEmpty()) "No clips" else "${{clips.size} clips",
+                        if (clips.isEmpty()) "No clips" else "${clips.size} clips",
                         color = Color(0xFFAAA6B6),
                         style = MaterialTheme.typography.labelMedium
                     )
@@ -393,8 +393,8 @@ class MainActivity : ComponentActivity() {
                             selected?.let {
                                 val mid = it.startMs + (it.endMs - it.startMs) / 2
                                 if (mid > it.startMs + 300 && mid < it.endMs - 300) {
-                                    val a = it.copy(endMs = mid, name = "${{it.name}-A")
-                                    val b = it.copy(id = UUID.randomUUID().toString(), startMs = mid, name = "${{it.name}-B")
+                                    val a = it.copy(endMs = mid, name = "${it.name}-A")
+                                    val b = it.copy(id = UUID.randomUUID().toString(), startMs = mid, name = "${it.name}-B")
                                     commit(clips.toMutableList().apply {
                                         removeAt(selectedIndex)
                                         add(selectedIndex, a)
@@ -412,7 +412,7 @@ class MainActivity : ComponentActivity() {
                         VirelixToolCard("↻", "Duplicate", Modifier.weight(1f)) {
                             selected?.let {
                                 commit(clips.toMutableList().apply {
-                                    add(selectedIndex + 1, it.copy(id = UUID.randomUUID().toString(), name = "${{it.name} Copy"))
+                                    add(selectedIndex + 1, it.copy(id = UUID.randomUUID().toString(), name = "${it.name} Copy"))
                                 })
                                 selectedIndex++
                             }
@@ -454,7 +454,7 @@ class MainActivity : ComponentActivity() {
                         FilterChip(
                             selected = preset == it,
                             onClick = { preset = it },
-                            label = { Text("${{it.name} ${{it.ratio}") }
+                            label = { Text("${it.name} ${it.ratio}") }
                         )
                     }
                 }
@@ -468,12 +468,12 @@ class MainActivity : ComponentActivity() {
                     Column(Modifier.padding(14.dp)) {
                         Text(
                             if (clips.isEmpty()) "Timeline is empty"
-                            else "${{clips.size} clip(s) • ${{clips.sumOf { (it.endMs - it.startMs).coerceAtLeast(0L) } / 1000L}s timeline",
+                            else "${clips.size} clip(s) • ${clips.sumOf { (it.endMs - it.startMs).coerceAtLeast(0L) } / 1000L}s timeline",
                             color = Color.White
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            "Text: ${{if (textOverlay.isBlank()) "off" else "on"} • Music: ${{if (musicUri == null) "off" else "on"} • Filter: ${{filterName} • Transition: ${{transitionName}",
+                            "Text: ${if (textOverlay.isBlank()) "off" else "on"} • Music: ${if (musicUri == null) "off" else "on"} • Filter: ${filterName} • Transition: ${transitionName}",
                             color = Color(0xFFAAA6B6),
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -515,7 +515,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 ) {
-                    Text(if (clips.isEmpty()) "Add a video to export" else "Export • ${{preset.ratio}")
+                    Text(if (clips.isEmpty()) "Add a video to export" else "Export • ${preset.ratio}")
                 }
 
                 Spacer(Modifier.height(18.dp))
@@ -534,7 +534,7 @@ class MainActivity : ComponentActivity() {
                         text = {
                             Column {
                                 LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
-                                Text("${{(progress * 100).toInt()}%")
+                                Text("${(progress * 100).toInt()}%")
                             }
                         }
                     )
@@ -790,12 +790,12 @@ class MainActivity : ComponentActivity() {
                             Column(Modifier.padding(8.dp)) {
                                 Text(c.name, maxLines = 1, color = Color.White)
                                 Text(
-                                    "${{fmt(c.startMs)}–${{fmt(c.endMs)}",
+                                    "${fmt(c.startMs)}–${fmt(c.endMs)}",
                                     color = Color.White.copy(alpha = 0.78f),
                                     style = MaterialTheme.typography.labelSmall
                                 )
                                 Text(
-                                    "${{c.speed}×  •  ${{if (c.volume > 0f) "Audio" else "Muted"}",
+                                    "${c.speed}×  •  ${if (c.volume > 0f) "Audio" else "Muted"}",
                                     color = Color.White.copy(alpha = 0.72f),
                                     style = MaterialTheme.typography.labelSmall
                                 )
