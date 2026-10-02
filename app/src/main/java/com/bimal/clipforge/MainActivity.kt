@@ -116,8 +116,18 @@ class MainActivity : ComponentActivity() {
             MaterialTheme(
                 colorScheme = darkColorScheme(
                     background = Bg,
+                    onBackground = Color.White,
                     surface = Panel,
-                    primary = Accent
+                    onSurface = Color.White,
+                    surfaceVariant = Color(0xFF202536),
+                    onSurfaceVariant = Color(0xFFD0CBD8),
+                    primary = Accent,
+                    onPrimary = Color.White,
+                    primaryContainer = Color(0xFF5E46B8),
+                    onPrimaryContainer = Color.White,
+                    secondary = AccentBlue,
+                    onSecondary = Color.White,
+                    outline = Color(0xFF716D7A)
                 )
             ) {
                 ClipForge()
